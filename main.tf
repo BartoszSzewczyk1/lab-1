@@ -64,11 +64,24 @@ variable "b" {
   type = number
 }
 
+locals {
+  calc = {
+    "+" = var.a + var.b
+    "-" = var.a - var.b
+    "*" = var.a * var.b
+    "/" = var.b != 0 ? var.a / var.b : "ERROR: Division by zero"
+  }
+}
+
 # Allowed: +, -, *, /
 variable "operand" {
-  
+  type = string
+  validation {
+    error_message = "Operand must be: + - * or /"
+    condition = contains(["+", "-", "*", "/"], var.operand)
+  }
 }
 
 output "result" {
-  value = 
+  value = local.calc[var.operand]
 }
