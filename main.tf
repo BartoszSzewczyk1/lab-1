@@ -26,3 +26,8 @@ resource "aws_s3_object" "object" {
   key    = basename(each.key)
   source = each.key
 }
+
+# Input - Bucket prefix jako zmienna + jako domyslny jest ustawiony Twoj
+# Input - Tagi, gdzie domyslne jest w variable "purpouse": "learning" (moze byc nadpisany)
+# Zawsze dodawany tag do bucketu (lub wszedzie) "owner": "jw"
+# Outputs: bucket ARN oraz pełny URL z HTTP
