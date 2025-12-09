@@ -37,29 +37,31 @@ variable "bucket_prefix" {
   default = "awsninja-1-12"
 }
 
-resource "random_string" "sufiks" {
+resource "random_string" "sufix" {
   length  = 12
   special = false
+  upper   = false
+  number  = true  
 }
 
-variable "purpouse" {
+variable "purpose" {
   type = string
   default = "learning"
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.bucket_prefix}-${random_string.sufiks.result}"
+  bucket = "${var.bucket_prefix}-${random_string.sufix.result}"
 
   tags = {
-    purpouse = var.purpouse
+    purpouse = var.purpose
     owner = "awsninja-1-12"
   }
 }
 
-output "bucket_ARN" {
-  value = aws_s3.bucket.ARN
+output "bucket_arn" {
+  value = aws_s3_bucket.bucket.arn
 }
 
 output "bucket_URL" {
-  value = "http://${aws_s3_bucket.bucket.bucket}.s3.amazonaws.com"
+  value = "https://${aws_s3_bucket.bucket.bucket}.s3.amazonaws.com"
 }
