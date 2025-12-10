@@ -41,7 +41,6 @@ resource "random_string" "sufix" {
   length  = 12
   special = false
   upper   = false
-  number  = true  
 }
 
 variable "purpose" {
