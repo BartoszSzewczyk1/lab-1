@@ -1,56 +1,69 @@
-provider "aws" {
-  # Configuration options
-  ignore_tags {
-    keys = var.tags-to-ignore
+terraform {
+  required_version = "~>1.14.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.25.0"
+    }
   }
 }
 
-resource "aws_s3_bucket" "my-bucket" {
-  bucket_prefix = "awsninja12-"
+provider "aws" {
+
 }
 
-resource "aws_s3_object" "object" {
-  for_each = fileset(path.module, "messages/*")
-
-  bucket = aws_s3_bucket.my-bucket.bucket
-  key    = basename(each.key)
-  source = each.key
+variable "name_prefix" {
+  type = string
+  default = "awsninja12"
 }
 
-
-# INPUT
-# cidr ="10.0.0.0/16" (string)
-# public_ip_on_launch = true|false (bool)
-# subnets = ["10.0.1.0/24", "10.0.2.0/24"] # subnety prywatne
-
-# tags
-
-# output
-# vpc_id
-
-resource "aws_vpc" "my-vpc" {
-  cidr_block = var.cidr
-
-  tags = merge(
-    {
-      name = "my-vpc"
-    },
-    var.tags
-  )
+variable "server_version" {
+  type = string
+  validation {
+    condition = var.server_version == "1" || var.server_version == "2"
+    error_message = "wrong version"
+  }
 }
 
-resource "aws_subnet" "private" {
-  for_each = toset(var.subnets)
+data "aws_ami" "server_ami" {
+  filter {
+    name = "name"
+    values = [ "ubuntu-linux-apache-${var.server_version}-*" ]
+  }
+}
 
-  vpc_id = aws_vpc.my-vpc.id
-  cidr_block = each.key
-  map_public_ip_on_launch = var.public_ip_on_launch
+resource "aws_instance" "app_server" {
+  ami           = data.aws_ami.server_ami.id
+  instance_type = "t2.nano"
 
-  tags = merge(
-    {
-      name = "private-${replace(each.key, "/", "-")}"
-      type = "private"
-    },
-    var.tags
-  )
+  vpc_security_group_ids = [
+    aws_security_group.allow_all.id
+    ]
+ 
+  tags = {
+    Name = "${var.name_prefix}-app-server"
+  }
+}
+
+output "server_ip" {
+  value = aws_instance.app_server.public_ip
+}
+
+resource "aws_security_group" "allow_all" {
+  name = "${var.name_prefix}-public-access"
+  ingress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [ "0.0.0.0/0" ]
+    ipv6_cidr_blocks = [ "::/0" ]
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [ "0.0.0.0/0" ]
+    ipv6_cidr_blocks = [ "::/0" ]
+  }
 }
